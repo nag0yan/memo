@@ -44,7 +44,13 @@ try {
       PRIMARY KEY (owner_id, id)
     )
   `);
-  await client.query("GRANT USAGE ON SCHEMA public TO memo_app");
+  const schemaAccess = await client.query(
+    "SELECT has_schema_privilege($1, $2, $3) AS allowed",
+    ["memo_app", "public", "USAGE"],
+  );
+  if (!schemaAccess.rows[0].allowed) {
+    throw new Error("The memo_app role does not have USAGE permission on the public schema.");
+  }
   await client.query("GRANT SELECT, INSERT, UPDATE, DELETE ON public.memos TO memo_app");
   console.log("Aurora DSQL memo schema is ready.");
 } finally {
