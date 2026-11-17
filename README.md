@@ -4,30 +4,9 @@
 
 ## 構成
 
-```mermaid
-flowchart TB
-    Browser["ブラウザ"]
-    Deploy["開発者 / mise run deploy"]
+![AWSアーキテクチャ図：Lambda Web Functionを中心にCognito、Aurora DSQL、S3、CloudWatch Logsを利用](./docs/architecture.svg)
 
-    subgraph AWS["AWS"]
-        Endpoint["Lambda Web Function Endpoint<br/>HTTPS / アプリ側認証"]
-        App["Lambda Web Function<br/>Node.js 24 / Express<br/>静的UI + JSON API"]
-        Cognito["Amazon Cognito User Pools"]
-        DSQL[("Amazon Aurora DSQL<br/>メモデータ")]
-        Role["IAM 実行ロール"]
-        Logs["Amazon CloudWatch Logs"]
-        S3[("Amazon S3<br/>バージョン管理されたZIP")]
-    end
-
-    Browser <-->|"HTML・CSS・JS / API"| Endpoint
-    Endpoint <--> App
-    App <-->|"ログイン / JWT発行・検証用公開鍵"| Cognito
-    App <-->|"SQL / IAM認証"| DSQL
-    Role -.->|"dsql:DbConnect / memo_app"| App
-    App -->|"ログ"| Logs
-    Deploy -.->|"TerraformでAWSリソースを管理<br/>ZIPアップロード"| S3
-    S3 -.->|"コードからrevision作成"| App
-```
+[AWS公式アイコン](https://aws.amazon.com/architecture/icons/)を使用しています。Web FunctionはLambda、Aurora DSQLはAuroraのサービスアイコンで表しています。
 
 - **画面**：静的ファイルもLambdaから配信し、ブラウザで描画（CSR）。CloudFront・API Gateway・Lambda Web Adapterは使いません。
 - **認証**：CognitoのJWTをHttpOnly Cookieで保持し、APIで検証。メモはユーザーID（`sub`）で分離します。ユーザー作成は管理者のみです。
