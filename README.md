@@ -1,45 +1,78 @@
 # Memo
 
-個人用メモのMVPです。AWS Lambda Web Functions（Node.js 24）、Amazon Cognito User Pools、Aurora DSQLを使用します。ユーザーはCognito管理者が作成し、アプリからの自己登録はできません。
-
-UIは白い紙と薄い罫線を基調にしたノートブック風のデザインです。
+ノートブック風のシンプルなメモアプリ。メモの作成・閲覧・編集・削除に対応します。
 
 ## 構成
 
-- Lambda Web Functionが静的UIとJSON APIを同じHTTPSエンドポイントで提供します。API GatewayやLambda Web Adapterは使いません。
-- TerraformがWeb Function、revision、endpoint、およびバージョニングされたS3デプロイパッケージを管理します。新しいrevisionが作成されると、endpointを新revisionに切り替えてから旧revisionを削除します。
-- Cognitoのユーザー名はメールアドレスです。初回ログイン時の仮パスワード変更にも対応しています。
-- Aurora DSQLへの接続はAWS公式Node.jsコネクターとIAM認証を使用します。Web Functionの実行ロールは`dsql:DbConnect`のみを持ち、DBの`memo_app`ロールに対応付けます。
-- メモの所有者IDは検証済みCognitoアクセストークンの`sub`です。DB操作は常に所有者IDで絞り込みます。
+```mermaid
+flowchart TB
+    Browser["ブラウザ"]
+    Deploy["開発者 / mise run deploy"]
+
+    subgraph AWS["AWS"]
+        Endpoint["Lambda Web Function Endpoint<br/>HTTPS / アプリ側認証"]
+        App["Lambda Web Function<br/>Node.js 24 / Express<br/>静的UI + JSON API"]
+        Cognito["Amazon Cognito User Pools"]
+        DSQL[("Amazon Aurora DSQL<br/>メモデータ")]
+        Role["IAM 実行ロール"]
+        Logs["Amazon CloudWatch Logs"]
+        S3[("Amazon S3<br/>バージョン管理されたZIP")]
+    end
+
+    Browser <-->|"HTML・CSS・JS / API"| Endpoint
+    Endpoint <--> App
+    App <-->|"ログイン / JWT発行・検証用公開鍵"| Cognito
+    App <-->|"SQL / IAM認証"| DSQL
+    Role -.->|"dsql:DbConnect / memo_app"| App
+    App -->|"ログ"| Logs
+    Deploy -.->|"TerraformでAWSリソースを管理<br/>ZIPアップロード"| S3
+    S3 -.->|"コードからrevision作成"| App
+```
+
+- **画面**：静的ファイルもLambdaから配信し、ブラウザで描画（CSR）。CloudFront・API Gateway・Lambda Web Adapterは使いません。
+- **認証**：CognitoのJWTをHttpOnly Cookieで保持し、APIで検証。メモはユーザーID（`sub`）で分離します。ユーザー作成は管理者のみです。
+- **データ・デプロイ**：DSQLにはIAM認証で接続。Terraformが全リソースを管理し、更新時は新しいrevisionへ切り替えます。図の点線はデプロイ・権限の関係です。
 
 ## デプロイ
 
-事前にmise、Node.js 24以降、pnpmを用意し、東京リージョンのAWS認証情報を設定してください。リポジトリのmise設定にTerraform 1.17.0とpnpm 12.16.1を固定しています。Terraform実行ユーザーにはCognito、Aurora DSQL、IAM、CloudWatch Logs、S3およびLambda Web Functionsの管理権限、`iam:PassRole`、Cloud Control APIの権限が必要です。Web Functionの作成には`cloudformation:CreateResource`も必要です。
+### 1. AWSリソースを作成
+
+mise、Node.js 24以降、AWS認証情報を用意してください。pnpm・Terraformのバージョンは[mise.toml](./mise.toml)で固定しています。
+
+デプロイにはCognito・DSQL・IAM・CloudWatch Logs・S3・Lambda Web Functionsの管理権限、`iam:PassRole`、Cloud Control API（`cloudformation:CreateResource`を含む）の権限が必要です。
 
 ```sh
+mise install
 mise exec -- terraform -chdir=terraform init
 mise run deploy
+mise exec -- terraform -chdir=terraform output -raw web_function_url
 ```
 
-デプロイタスクは本番依存パッケージをインストールし、Terraformを実行します。TerraformはアプリをZIP化してS3に保存します。更新時も同じタスクを実行してください。`mise run deploy -auto-approve`のように、引数は`terraform apply`に渡せます。URLは`terraform -chdir=terraform output -raw web_function_url`で確認できます。
+更新も`mise run deploy`で行えます。引数は`terraform apply`に渡されます（例：`mise run deploy -auto-approve`）。
 
-DB初期化は最初のデプロイ後に、Aurora DSQLの`dsql:DbConnectAdmin`権限を持つAWS認証情報で一度実行します。スクリプトは`memo_app` DBロール、IAMマッピング、メモテーブルを作成します。初期化が完了するまではメモ操作は失敗します。
+### 2. DBを初期化（初回のみ）
+
+`dsql:DbConnectAdmin`権限のあるAWS認証情報で実行します。DBロール・IAMマッピング・メモテーブルを作成します。**初期化前はメモを操作できません。**
 
 ```sh
-export AWS_REGION="$(terraform -chdir=terraform output -raw aws_region)"
-export DSQL_ENDPOINT="$(terraform -chdir=terraform output -raw dsql_endpoint)"
-export WEB_FUNCTION_ROLE_ARN="$(terraform -chdir=terraform output -raw web_function_role_arn)"
+export AWS_REGION="$(mise exec -- terraform -chdir=terraform output -raw aws_region)"
+export DSQL_ENDPOINT="$(mise exec -- terraform -chdir=terraform output -raw dsql_endpoint)"
+export WEB_FUNCTION_ROLE_ARN="$(mise exec -- terraform -chdir=terraform output -raw web_function_role_arn)"
 mise exec -- pnpm --dir app install
 mise exec -- pnpm --dir app run db:migrate
 ```
 
-ユーザーはCognitoコンソールの対象User Poolで**ユーザーを作成**してください。アプリからの新規登録は許可されていません。管理者が設定した仮パスワードで初回ログインすると、アプリ上で新しいパスワードを設定できます。
+### 3. ユーザーを作成
 
-以前の`aws lambda-web deploy`で同名のWeb Functionや`dev` endpointを作成済みの場合は、Terraformでのimportまたは移行が必要です。そのまま適用するとリソース名が衝突します。
+Cognitoコンソールの対象User Poolで、メールアドレスをユーザー名として作成します。仮パスワードでログインすると、新しいパスワードを設定できます。
 
-## ローカル開発とテスト
+> Terraform以外で同名のWeb Functionや`dev` endpointを作成済みの場合は、先にimportまたは移行が必要です。
 
-`app`ディレクトリで依存パッケージをインストールし、必要な環境変数とAWS認証情報を設定して起動します。DSQLには`memo_app`ロールとIAMマッピングが必要です。
+## 開発
+
+### ローカル起動
+
+AWS認証情報と初期化済みDSQLが必要です。ローカル実行用IAM主体にも`dsql:DbConnect`権限と`memo_app`へのIAMマッピングを設定してください。
 
 ```sh
 mise exec -- pnpm --dir app install
@@ -50,24 +83,30 @@ AWS_REGION=ap-northeast-1 \
 mise exec -- pnpm --dir app start
 ```
 
-テストはAWSリソースを必要としません。Terraformのテストでは、事前に本番依存パッケージをフラットにインストールしておきます。
+起動後は http://127.0.0.1:3000 を開きます。
+
+### テスト
+
+AWSリソースは不要です。Terraformは事前に`init`してください。
 
 ```sh
 mise exec -- pnpm --dir app test
-terraform -chdir=terraform fmt -check -recursive
-terraform -chdir=terraform validate
+mise exec -- terraform -chdir=terraform fmt -check -recursive
+mise exec -- terraform -chdir=terraform validate
 mise exec -- pnpm --dir app install --prod --frozen-lockfile --node-linker=hoisted
-terraform -chdir=terraform test
+mise exec -- terraform -chdir=terraform test
 ```
 
 ## 削除
 
-`terraform -chdir=terraform destroy`でWeb Functionを含むTerraform管理リソースを削除できます。DB内のメモ、Cognitoユーザー、S3内のデプロイパッケージの全バージョンも削除されるため、必要なデータを事前に退避してください。
+```sh
+mise exec -- terraform -chdir=terraform destroy
+```
+
+**メモ・Cognitoユーザー・S3内の全デプロイパッケージも削除されます。** 必要なデータを事前に退避してください。
 
 ## 参考資料
 
 - [AWS Lambda Web Functions](https://docs.aws.amazon.com/lambda/latest/dg/web-functions.html)
-- [Lambda Web Functionの作成とデプロイ](https://docs.aws.amazon.com/lambda/latest/dg/web-functions-create.html)
 - [Aurora DSQL向けNode.jsコネクター](https://docs.aws.amazon.com/aurora-dsql/latest/userguide/SECTION_Node-js-connectors.html)
-- [Aurora DSQLのIAMとDBロール](https://docs.aws.amazon.com/aurora-dsql/latest/userguide/using-database-and-iam-roles.html)
-- [CognitoのサードパーティIdP連携](https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-pools-identity-federation.html)
+- [Amazon Cognito User Pools](https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-pools.html)
