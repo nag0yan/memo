@@ -1,0 +1,350 @@
+:root {
+  color-scheme: light;
+  font-family: Inter, "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+  color: #252822;
+  background: #f5f2eb;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  min-width: 320px;
+  margin: 0;
+  background:
+    radial-gradient(ellipse at 80% 10%, rgba(233, 211, 189, 0.3), transparent 34rem),
+    #f5f2eb;
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+.shell {
+  width: min(100% - 40px, 760px);
+  margin: 0 auto;
+  padding: 28px 0 80px;
+}
+
+.topbar,
+.brand,
+.page-heading,
+.form-heading,
+.form-actions,
+.memo-card-heading,
+.memo-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.topbar {
+  min-height: 48px;
+  margin-bottom: 76px;
+}
+
+.brand {
+  justify-content: flex-start;
+  gap: 10px;
+  color: inherit;
+  font-size: 19px;
+  font-weight: 750;
+  letter-spacing: -0.06em;
+  text-decoration: none;
+}
+
+.brand-mark {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border-radius: 10px;
+  color: #fffaf0;
+  background: #d26f51;
+  font-family: Georgia, serif;
+  font-size: 22px;
+  font-style: italic;
+}
+
+.brand-dot {
+  color: #d26f51;
+}
+
+.login-panel {
+  width: min(100%, 430px);
+  margin: 0 auto;
+}
+
+.eyebrow {
+  margin: 0 0 16px;
+  color: #8d8a7e;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+}
+
+h1 {
+  margin: 0;
+  font-family: Georgia, "Yu Mincho", serif;
+  font-size: clamp(32px, 7vw, 48px);
+  font-weight: 500;
+  letter-spacing: -0.06em;
+  line-height: 1.2;
+}
+
+.intro {
+  margin: 18px 0 34px;
+  color: #77786f;
+  font-size: 14px;
+}
+
+.auth-form,
+.memo-form {
+  display: grid;
+  gap: 12px;
+}
+
+label {
+  color: #585b52;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+input,
+textarea {
+  width: 100%;
+  border: 1px solid #e4e0d7;
+  border-radius: 9px;
+  outline: none;
+  background: rgba(255, 255, 255, 0.7);
+  color: #252822;
+  transition: border-color 140ms ease, box-shadow 140ms ease;
+}
+
+input {
+  height: 46px;
+  padding: 0 13px;
+}
+
+textarea {
+  min-height: 124px;
+  padding: 12px 13px;
+  line-height: 1.7;
+  resize: vertical;
+}
+
+input:focus,
+textarea:focus {
+  border-color: #d26f51;
+  box-shadow: 0 0 0 3px rgba(210, 111, 81, 0.13);
+}
+
+.button {
+  min-height: 42px;
+  border: 0;
+  border-radius: 8px;
+  padding: 0 16px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.button-primary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #fffaf0;
+  background: #30362e;
+}
+
+.auth-form .button-primary {
+  margin-top: 10px;
+}
+
+.button-primary:hover {
+  background: #454c42;
+}
+
+.button-quiet {
+  color: #62645a;
+  background: transparent;
+}
+
+.button-quiet:hover {
+  background: rgba(37, 40, 34, 0.06);
+}
+
+.hint,
+.message {
+  min-height: 20px;
+  margin: 0;
+  color: #a45741;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.hint {
+  color: #77786f;
+}
+
+.page-heading {
+  align-items: flex-end;
+  margin-bottom: 26px;
+}
+
+.page-heading .eyebrow {
+  margin-bottom: 8px;
+}
+
+.page-heading h1 {
+  font-size: clamp(30px, 6vw, 40px);
+}
+
+.count {
+  margin: 0 0 5px;
+  color: #8d8a7e;
+  font-size: 12px;
+}
+
+.memo-form {
+  gap: 11px;
+  margin-bottom: 18px;
+  border: 1px solid #e9e4da;
+  border-radius: 13px;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.62);
+  box-shadow: 0 14px 40px rgba(59, 52, 40, 0.04);
+}
+
+.form-heading {
+  margin-bottom: 5px;
+}
+
+.form-heading h2 {
+  margin: 0;
+  font-family: Georgia, "Yu Mincho", serif;
+  font-size: 20px;
+  font-weight: 500;
+}
+
+.form-decoration {
+  color: #d26f51;
+  font-size: 21px;
+}
+
+.form-actions {
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.form-actions .button-primary {
+  min-width: 150px;
+}
+
+.memo-list {
+  display: grid;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.memo-card {
+  border: 1px solid #e9e4da;
+  border-radius: 12px;
+  padding: 18px 20px 14px;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.memo-card-heading {
+  align-items: baseline;
+  gap: 15px;
+}
+
+.memo-card h2 {
+  overflow-wrap: anywhere;
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.memo-card time {
+  flex: 0 0 auto;
+  color: #9b998f;
+  font-size: 10px;
+}
+
+.memo-content {
+  overflow-wrap: anywhere;
+  margin: 13px 0 15px;
+  color: #63655c;
+  font-size: 13px;
+  line-height: 1.8;
+  white-space: pre-wrap;
+}
+
+.memo-actions {
+  justify-content: flex-end;
+  gap: 16px;
+  border-top: 1px solid #efebe3;
+  padding-top: 10px;
+}
+
+.text-button {
+  border: 0;
+  padding: 3px 0;
+  color: #77786f;
+  background: transparent;
+  font-size: 11px;
+}
+
+.text-button:hover {
+  color: #30362e;
+}
+
+.text-button-danger:hover {
+  color: #b64c3c;
+}
+
+.empty-state {
+  margin: 36px 0;
+  color: #8d8a7e;
+  font-size: 13px;
+  text-align: center;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+@media (max-width: 520px) {
+  .shell {
+    width: min(100% - 28px, 760px);
+    padding-top: 18px;
+  }
+
+  .topbar {
+    margin-bottom: 52px;
+  }
+
+  .memo-form {
+    padding: 16px;
+  }
+
+  .memo-card {
+    padding: 15px 16px 12px;
+  }
+
+  .memo-card-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 5px;
+  }
+}

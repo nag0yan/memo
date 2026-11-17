@@ -1,0 +1,7 @@
+.terraform
+*.tfstate
+*.tfstate.backup
+*.tfstate.*
+*.tfplan
+node_modules/
+npm-debug.log*
