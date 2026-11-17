@@ -115,7 +115,7 @@ function resetMemoForm() {
   editingId = null;
   memoForm.reset();
   formTitle.textContent = "新しいメモ";
-  saveLabel.textContent = "メモを保存";
+  saveLabel.textContent = "保存";
   cancelEditButton.hidden = true;
 }
 

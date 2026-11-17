@@ -2,6 +2,8 @@
 
 個人用メモのMVPです。AWS Lambda Web Functions（Node.js 24）、Amazon Cognito User Pools、Aurora DSQLを使用します。ユーザーはCognito管理者が作成し、アプリからの自己登録はできません。
 
+UIは白い紙と薄い罫線を基調にしたノートブック風のデザインです。
+
 ## 構成
 
 - Lambda Web Functionが静的UIとJSON APIを同じHTTPSエンドポイントで提供します。API GatewayやLambda Web Adapterは使いません。
